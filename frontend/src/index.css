@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Custom scrollbar for that clean SaaS look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full border-2 border-slate-100 hover:bg-slate-400 transition-colors;
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10;
+}
