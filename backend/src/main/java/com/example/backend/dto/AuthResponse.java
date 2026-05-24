@@ -17,4 +17,5 @@ public class AuthResponse {
     private String lastName;
     private String restaurantName;
     private Role role;
+    private boolean isPaid;
 }

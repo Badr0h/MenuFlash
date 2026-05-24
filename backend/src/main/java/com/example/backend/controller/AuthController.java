@@ -38,6 +38,7 @@ public class AuthController {
                 .lastName(request.getLastName())
                 .restaurantName(request.getRestaurantName())
                 .role(request.getRole() != null ? request.getRole() : Role.ADMIN)
+                .isPaid(false) // Par défaut false à l'inscription
                 .build();
         userRepository.save(user);
         System.out.println("UTILISATEUR CRÉÉ AVEC SUCCÈS : " + user.getEmail());
@@ -57,6 +58,7 @@ public class AuthController {
                 .lastName(user.getLastName())
                 .restaurantName(user.getRestaurantName())
                 .role(user.getRole())
+                .isPaid(user.isPaid())
                 .build());
     }
 
@@ -88,6 +90,39 @@ public class AuthController {
                 .lastName(user.getLastName())
                 .restaurantName(user.getRestaurantName())
                 .role(user.getRole())
+                .isPaid(user.isPaid())
+                .build());
+    }
+
+    @PostMapping("/simulate-payment")
+    public ResponseEntity<AuthResponse> simulatePayment(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        System.out.println("SIMULATION DE PAIEMENT POUR : " + email);
+        
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        
+        user.setPaid(true);
+        userRepository.save(user);
+        
+        System.out.println("PAIEMENT RÉUSSI ET ENREGISTRÉ POUR : " + email);
+        
+        var userDetails = new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+        );
+
+        var jwtToken = jwtService.generateToken(userDetails);
+        
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(jwtToken)
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .restaurantName(user.getRestaurantName())
+                .role(user.getRole())
+                .isPaid(user.isPaid())
                 .build());
     }
 }

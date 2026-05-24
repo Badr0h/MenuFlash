@@ -1,32 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import productService from '../services/productService';
-import AuthService from '../services/AuthService';
+import { useAuth } from '../api/AuthContext';
 import ProductCard from '../components/ProductCard';
-import { Utensils, RefreshCw, ChevronLeft } from 'lucide-react';
+import { Utensils, RefreshCw, ChevronLeft, MapPin, Clock, Zap } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 
-const ClientMenuView = () => {
+const ClientMenuView = ({ isDemo = false }) => {
     const { restaurantId } = useParams();
+    const { user, loading: authLoading } = useAuth();
     const [products, setProducts] = useState([]);
     const [groupedProducts, setGroupedProducts] = useState({});
     const [loading, setLoading] = useState(true);
     const [restaurantName, setRestaurantName] = useState('MenuFlash');
 
     useEffect(() => {
-        // In a real app, we'd fetch restaurant info by ID
-        // For now, if user is logged in, we use their restaurant name
-        const user = AuthService.getCurrentUser();
-        if (user?.restaurantName) {
+        // Defensive check: wait for auth to initialize if not a demo
+        if (!isDemo && authLoading) return;
+
+        if (isDemo && user?.restaurantName) {
             setRestaurantName(user.restaurantName);
+        } else if (!isDemo) {
+            // In a real app, fetch restaurant info by restaurantId
+            setRestaurantName(restaurantId ? `Établissement #${restaurantId}` : 'MenuFlash');
         }
 
         const fetchProducts = async () => {
             try {
                 const data = await productService.getAllProducts();
-                setProducts(data);
+                const productData = Array.isArray(data) ? data : [];
+                setProducts(productData);
                 
-                const groups = data.reduce((acc, product) => {
-                    const category = product.category || 'Other';
+                const groups = productData.reduce((acc, product) => {
+                    const category = product.category || 'Autres';
                     if (!acc[category]) acc[category] = [];
                     acc[category].push(product);
                     return acc;
@@ -40,66 +45,83 @@ const ClientMenuView = () => {
                 setGroupedProducts(sortedGroups);
             } catch (err) {
                 console.error('Failed to fetch menu:', err);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchProducts();
-    }, []);
+    }, [user, isDemo, restaurantId, authLoading]);
+
+    if (authLoading && !isDemo) {
+        return (
+            <div className="flex h-screen w-screen items-center justify-center bg-white">
+                <RefreshCw className="animate-spin text-indigo-600" size={24} />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-slate-900 selection:bg-indigo-100 selection:text-indigo-900 font-sans">
-            <div className="max-w-md mx-auto bg-white min-h-screen overflow-hidden flex flex-col relative shadow-2xl">
-                <header className="bg-slate-900 pt-16 pb-10 px-8 text-white relative">
-                    <div className="absolute top-4 left-4">
-                        <Link to="/" className="text-slate-400 hover:text-white transition-colors">
-                            <ChevronLeft size={24} />
+        <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100">
+            <div className="max-w-md mx-auto bg-white min-h-screen shadow-sm flex flex-col relative border-x border-slate-100">
+                
+                {/* Refined Header */}
+                <header className="bg-white pt-16 pb-12 px-8 relative border-b border-slate-50">
+                    <div className="absolute top-6 left-6">
+                        <Link to="/" className="text-slate-400 hover:text-slate-900 transition-colors">
+                            <ChevronLeft size={22} />
                         </Link>
                     </div>
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
-                            <Utensils size={28} className="text-white" />
+
+                    <div className="flex flex-col items-center text-center">
+                        <div className="bg-indigo-600 p-2 rounded-xl shadow-md mb-6">
+                            <Utensils size={24} className="text-white" />
                         </div>
-                        <div className="flex items-center space-x-2 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Open Now</span>
+                        
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">{restaurantName}</h1>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Expérience Gastronomique</p>
+                        
+                        <div className="flex items-center space-x-3">
+                            <div className="flex items-center text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                Ouvert
+                            </div>
+                            <div className="w-1 h-1 rounded-full bg-slate-200" />
+                            <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <MapPin size={10} className="mr-1" />
+                                Sélection Gourmet
+                            </div>
                         </div>
                     </div>
-                    
-                    <h1 className="text-4xl font-black tracking-tighter mb-2 uppercase">{restaurantName}</h1>
-                    <p className="text-indigo-400 font-black uppercase tracking-[0.3em] text-[10px] opacity-80">Premium Digital Experience</p>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-6 -mt-6 bg-slate-50 rounded-t-[2.5rem] relative z-10 custom-scrollbar pb-24">
+                <main className="flex-1 overflow-y-auto p-6 scroll-smooth custom-scrollbar pb-20">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-24">
-                            <RefreshCw className="animate-spin text-indigo-600 mb-4" size={40} />
-                            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading our menu...</p>
+                        <div className="flex flex-col items-center justify-center py-32">
+                            <RefreshCw className="animate-spin text-indigo-600 mb-4" size={24} />
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Préparation du menu...</p>
                         </div>
                     ) : Object.keys(groupedProducts).length === 0 ? (
                         <div className="text-center py-24 px-6">
-                            <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-6 border border-slate-100">
-                                <Utensils className="text-slate-200" size={32} />
+                            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                <Utensils className="text-slate-200" size={20} />
                             </div>
-                            <p className="text-slate-900 font-black uppercase tracking-widest text-sm">Our menu is coming soon</p>
-                            <p className="text-slate-400 text-xs font-medium mt-2">Check back shortly for delicious updates.</p>
+                            <p className="text-slate-900 font-bold text-sm">Menu en cours d'élaboration</p>
+                            <p className="text-slate-400 text-xs mt-1">Revenez très prochainement pour découvrir nos plats.</p>
                         </div>
                     ) : (
-                        <div className="space-y-10">
+                        <div className="space-y-12">
                             {Object.entries(groupedProducts).map(([category, items]) => (
                                 <section key={category}>
-                                    <div className="flex items-center space-x-4 mb-6">
-                                        <h2 className="text-lg font-black text-slate-900 tracking-tight uppercase whitespace-nowrap">
+                                    <div className="flex items-center space-x-3 mb-6">
+                                        <h2 className="text-xs font-bold text-slate-900 tracking-[0.2em] uppercase whitespace-nowrap">
                                             {category}
                                         </h2>
-                                        <div className="h-px w-full bg-slate-200" />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md border border-slate-100 shadow-sm">
-                                            {items.length}
-                                        </span>
+                                        <div className="h-px w-full bg-slate-100" />
                                     </div>
                                     
-                                    <div className="space-y-4">
+                                    <div className="space-y-5">
                                         {items.map(product => (
                                             <ProductCard 
                                                 key={product.id} 
@@ -114,8 +136,12 @@ const ClientMenuView = () => {
                     )}
                 </main>
                 
-                <footer className="bg-white border-t border-slate-100 p-6 text-center">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Powered by MenuFlash</p>
+                <footer className="p-8 text-center bg-slate-50 border-t border-slate-100">
+                    <div className="inline-flex items-center space-x-1.5 mb-2">
+                        <Zap size={12} className="text-indigo-600" fill="currentColor" />
+                        <span className="text-[10px] font-bold tracking-tight text-slate-800">MenuFlash</span>
+                    </div>
+                    <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest italic">Digital Gourmet Experience</p>
                 </footer>
             </div>
         </div>
