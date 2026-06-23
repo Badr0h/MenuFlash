@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
+  Layers,
   Eye,
   LogOut,
   Zap,
@@ -30,6 +31,7 @@ const Sidebar = () => {
   const navItems = [
     { path: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
     { path: '/admin/products', label: 'Produits', icon: Package },
+    { path: '/admin/categories', label: 'Catégories', icon: Layers },
     { path: '/admin/profile', label: 'Mon Compte', icon: User },
     { path: '/pricing', label: 'Abonnement', icon: CreditCard },
     { path: '/menu/demo', label: 'Aperçu Menu', icon: Eye },

@@ -10,5 +10,4 @@ public interface ProductService {
     Product updateProduct(Long id, Product productDetails);
     void deleteProduct(Long id);
     Product updateAvailability(Long id, boolean isAvailable);
-    List<Product> getProductsByCategoryAndAvailability(String category, boolean isAvailable);
 }

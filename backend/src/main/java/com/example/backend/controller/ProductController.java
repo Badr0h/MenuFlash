@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*", methods = {RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.OPTIONS})
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*", methods = {RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.OPTIONS}, allowCredentials = "true")
 public class ProductController {
 
     private final ProductService productService;
@@ -59,10 +59,5 @@ public class ProductController {
     public ResponseEntity<Product> updateAvailability(@PathVariable Long id, @RequestBody Map<String, Boolean> payload) {
         boolean isAvailable = payload.getOrDefault("isAvailable", true);
         return ResponseEntity.ok(productService.updateAvailability(id, isAvailable));
-    }
-
-    @GetMapping("/filter")
-    public List<Product> filterProducts(@RequestParam String category, @RequestParam(defaultValue = "true") boolean isAvailable) {
-        return productService.getProductsByCategoryAndAvailability(category, isAvailable);
     }
 }

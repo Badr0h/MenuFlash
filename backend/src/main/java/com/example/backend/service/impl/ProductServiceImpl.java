@@ -1,12 +1,19 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.domain.model.GlobalImage;
 import com.example.backend.domain.model.Product;
+import com.example.backend.domain.model.User;
 import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.repository.CategoryRepository;
+import com.example.backend.repository.GlobalImageRepository;
 import com.example.backend.repository.ProductRepository;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 
@@ -15,10 +22,15 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final GlobalImageRepository globalImageRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return productRepository.findByUser(user);
     }
 
     @Override
@@ -30,6 +42,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public Product createProduct(Product product) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        product.setUser(user);
+        mapIdsToEntities(product);
         return productRepository.save(product);
     }
 
@@ -54,13 +70,27 @@ public class ProductServiceImpl implements ProductService {
             product.setPrice(productDetails.getPrice());
         }
         
-        if (productDetails.getCategory() != null && !productDetails.getCategory().isBlank()) {
-            product.setCategory(productDetails.getCategory());
-        }
+        mapIdsToEntities(productDetails);
+        product.setCategory(productDetails.getCategory());
+        product.setGenericImage(productDetails.getGenericImage());
+        product.setImageUrl(productDetails.getImageUrl());
         
         product.setAvailable(productDetails.isAvailable());
         
         return productRepository.save(product);
+    }
+
+    private void mapIdsToEntities(Product product) {
+        if (product.getCategoryId() != null) {
+            product.setCategory(categoryRepository.findById(product.getCategoryId()).orElse(null));
+        }
+        if (product.getGenericImageId() != null) {
+            GlobalImage img = globalImageRepository.findById(product.getGenericImageId()).orElse(null);
+            product.setGenericImage(img);
+            if (img != null) {
+                product.setImageUrl(img.getImageUrl());
+            }
+        }
     }
 
     @Override
@@ -76,10 +106,5 @@ public class ProductServiceImpl implements ProductService {
         Product product = getProductById(id);
         product.setAvailable(isAvailable);
         return productRepository.save(product);
-    }
-
-    @Override
-    public List<Product> getProductsByCategoryAndAvailability(String category, boolean isAvailable) {
-        return productRepository.findByCategoryAndIsAvailable(category, isAvailable);
     }
 }

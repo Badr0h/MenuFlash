@@ -59,7 +59,8 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("message", "Database integrity violation");
-        response.put("details", ex.getMostSpecificCause().getMessage());
+        Throwable cause = ex.getRootCause();
+        response.put("details", cause != null ? cause.getMessage() : ex.getMostSpecificCause().getMessage());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

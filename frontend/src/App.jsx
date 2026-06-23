@@ -8,6 +8,7 @@ import RegisterPage from './views/RegisterPage';
 import PricingPage from './views/PricingPage';
 import AdminOverview from './views/AdminOverview';
 import AdminProducts from './views/AdminProducts';
+import AdminCategories from './views/AdminCategories';
 import UserProfile from './views/UserProfile';
 import ClientMenuView from './views/ClientMenuView';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -16,7 +17,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+        <div className="min-h-screen bg-stone-50 text-slate-800 font-sans">
           <Routes>
             {/* Routes Publiques */}
             <Route path="/" element={<LandingPage />} />
@@ -32,6 +33,7 @@ function App() {
             <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
               <Route path="/admin/dashboard" element={<AdminOverview />} />
               <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/categories" element={<AdminCategories />} />
               
               {/* FIX PROFILE URL: Alignement exact de l'URL demandée */}
               <Route path="/admin/profile" element={<UserProfile />} />
